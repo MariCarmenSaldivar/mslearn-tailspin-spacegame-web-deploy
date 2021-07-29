@@ -72,7 +72,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
-    environment: dev
+    environment: dou-dev
     variables:
     - group: Release
     strategy:
@@ -95,7 +95,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
-    environment: test
+    environment: dou-test
     variables:
     - group: 'Release'
     strategy:
@@ -118,7 +118,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
-    environment: staging
+    environment: dou-staging
     variables:
     - group: 'Release'
     strategy:
