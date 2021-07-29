@@ -72,7 +72,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
-    environment: dev
+    environment: dou-dev
     variables:
     - group: Release
     strategy:
@@ -95,7 +95,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
-    environment: test
+    environment: dou-test
     variables:
     - group: 'Release'
     strategy:
@@ -118,7 +118,7 @@ stages:
   - deployment: Deploy
     pool:
       vmImage: 'ubuntu-20.04'
-    environment: staging
+    environment: dou-staging
     variables:
     - group: 'Release'
     strategy:
@@ -133,3 +133,26 @@ stages:
               azureSubscription: 'Resource Manager - Tailspin - Space Game'
               appName: '$(WebAppNameStaging)'
               package: '$(Pipeline.Workspace)/drop/$(buildConfiguration)/*.zip'
+  - job: RunLoadTests
+      dependsOn: Deploy
+      displayName: 'Run load tests'
+      pool:
+        vmImage: 'ubuntu-20.04'
+      variables:
+      - group: Release
+      steps:
+      - script: |
+          wget -c ftp.ps.pl/pub/apache/jmeter/binaries/apache-jmeter-$(jmeterVersion).tgz
+          tar -xzf apache-jmeter-$(jmeterVersion).tgz
+        displayName: 'Install Apache JMeter'
+      - script: apache-jmeter-$(jmeterVersion)/bin/./jmeter -n -t LoadTest.jmx -o Results.xml -Jhostname=$(STAGING_HOSTNAME)
+        displayName: 'Run Load tests'
+      - script: |
+          sudo apt-get update
+          sudo apt-get install xsltproc
+          xsltproc JMeter2JUnit.xsl Results.xml > JUnit.xml
+        displayName: 'Transform JMeter output to JUnit'
+      - task: PublishTestResults@2
+        inputs:
+          testResultsFormat: JUnit
+          testResultsFiles: JUnit.xml
